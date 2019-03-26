@@ -6,7 +6,7 @@ https://github.com/jrballot/CICD
 
 ### GIT
 
-'''
+```
 
 Instalando
 
@@ -86,5 +86,5 @@ Desfazendo as merdas:
 
 -----------------------------------------------------------------
 
-'''
+```
 
