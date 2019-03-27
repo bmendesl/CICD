@@ -79,11 +79,44 @@ Desfazendo as merdas:
 > git revert --continue
 > git log
 -----------------------------------------------------------------
+## Branch - ramificação da arvore principal, copia de uma branch que ja estou.
+
+> git branch nova_branch -- criei nova branch
+> git branch
+> git checkout nova_branch -- mudei para minha branch
+> git checkout -b  nova_nova_branch - crio e ja mudo para minha branch
+> git branch -d/-D nova_nova_branch -- D maiusculo forca a remocao e d minusculo so deixa se tiver feito merge 
+-----------------------------------------------------------------
+## Merge - mesclar as coisas de uma branch com outra
+
+> git merge nova_branch
+
+Fast-forward - movimenta o HEAD referenciando para a branch nova, para economia dos recursos.
+-----------------------------------------------------------------
+## Rebase - deixa o commit alinhado.
+
+> git rebase <branch>
+-----------------------------------------------------------------
+## cherry-pick - permite pegar um commit especifico, e cria uma nova estrutura.
+
+> git cherry-pick <branch hash>
+-----------------------------------------------------------------
+## Git flow - forma de gerenciar meu repo, faco uma alteracao imediata e depois posso usar o cherry-pick para atualizar as outras branchs.
 
 -----------------------------------------------------------------
+## tag
 
+> git tag -a 1.0 -m "Versao 1.0" --
+> git tag -a 1.1 -m "versao 1.1" <hash do commit> -- tag anotada, caso nao especificar o commit ele pega o atual
+> git show <tag> -- mostra a tag e o commit
 -----------------------------------------------------------------
+> git checkout v0.1 ---meu HEAD muda o ponteiro para o commit da tag e nao enxergo os commits mais recentes. Para sair so realizar checkout para a feature || master.
+-----------------------------------------------------------------
+(major).(minor).(fix)
 
+fix - correcao 
+minor - 
+major - mudanca de estrutura
 -----------------------------------------------------------------
 
 ```
