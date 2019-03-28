@@ -119,5 +119,34 @@ minor -
 major - mudanca de estrutura
 -----------------------------------------------------------------
 
+## Instalando Jenkins
+
+Tem que ser a versao abaixo e o maven que é o gerenciador de pacotes e dependencias do java.
+
+> yum install -y java-1.8.0-openjdk maven
+
+> curl http://pkg.jenkins-ci.org/redhat/jenkins.repo -o /etc/yum.repos.d/jenkins.repo
+> rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+> yum install jenkins -y
+> systemctl enable jenkins
+> systemctl start jenkins
+
+## Instalando Docker na maquina pipeline
+
+> yum install -y yum-utils device-mapper-persistent-data lvm2
+> yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+> yum install -y docker-ce docker-ce-cli containerd.io
+> systemctl enable docker
+> systemctl start docker
+
+## Rodando SonarQube no Docker
+
+> docker run -dti --name sonarqube --restart always -p 9000:9000 sonarqube
+
+## Rodando SonatypeNexus OSS no Docker
+
+> docker run -dti --name nexus --restart always -p 8081:8081 sonatype/nexus3
+
+
 ```
 
