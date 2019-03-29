@@ -4,6 +4,22 @@ Repositorio base
 
 https://github.com/jrballot/CICD
 
+http://dontpad.com/524-4linux
+
+https://github.com/jrballot/CICD
+
+https://app.vagrantup.com/boxes/search
+
+Vagrantfile do curso:
+https://raw.githubusercontent.com/jrballot/CICD/master/Vagrantfile
+
+Gitlab Comparado a outras ferramentas:
+https://about.gitlab.com/devops-tools/
+
+Jenkins Pipeline Syntax:
+https://jenkins.io/doc/book/pipeline/syntax/
+
+
 ### GIT
 
 ```
@@ -130,6 +146,98 @@ Tem que ser a versao abaixo e o maven que é o gerenciador de pacotes e dependen
 > yum install jenkins -y
 > systemctl enable jenkins
 > systemctl start jenkins
+
+PIPELINE IN JENKINS:
+
+=> https://jenkins.io/doc/book/pipeline/syntax/
+
+ - Especificar um agent - minhas maquinas que irei executar ou executar local 'any'.
+ - Depois meu bloco de stage, minhas execucoes;
+ - Dentro do blco, sou obrigado a criar um step;
+ ===================================
+ pipeline {
+
+    // agent {
+    //     docker {
+    //         image 'alpine'
+    //     }
+    // }
+    
+    agent any
+    stages {
+        stage('Compilacao do Projeto'){
+            steps{
+                echo "$WORKSPACE"
+                sh "curl ifconfig.io"
+            }
+        }
+        stage('Finalizando Projeto'){
+            steps{
+                echo "Projeto compilado com sucesso"
+            }
+        }
+    }    
+}
+ ====================================
+ 
+ ======================================
+ pipeline {
+
+    // agent {
+    //     docker {
+    //         image 'alpine'
+    //     }
+    // }
+    
+    agent any
+    stages {
+        stage('Compilacao do Projeto'){
+            steps{
+                echo "$WORKSPACE"
+                sh "curl ifconfig.io"
+            }
+        }
+        stage('Rodando testes em paralelo'){
+            parallel{
+                stage('teste no windows XP'){
+                    steps{
+                        echo "Windows"
+                    }
+                }
+                stage('teste no IOS'){
+                    steps{
+                        echo "Apple IOS X - Maverik"
+                    }
+                }
+                stage('teste no FreeBSD 12'){
+                    steps{
+                        echo "Melhor que Linux"
+                    }
+                }
+            }
+        }
+        stage('Deploy em Paralello'){
+            parallel{
+                stage('Deploy AWS'){
+                    steps{
+                        echo "AWS"
+                    }
+                }
+                stage('Deploy GCloud'){
+                    steps{
+                        echo "GCloud"
+                    }
+                }
+            }
+        }
+        stage('Finalizando Projeto'){
+            steps{
+                echo "Projeto compilado com sucesso"
+            }
+        }
+    }    
+}
+ ======================================
 
 ## Instalando Docker na maquina pipeline
 
