@@ -405,6 +405,96 @@ PIPELINE IN JENKINS:
     
 }
  =========================================
+ 
+ =========================================
+ pipeline {
+    
+    agent {
+        docker {
+            image 'alpine'
+        }
+    }
+
+    // agent any
+    
+    environment {
+        GIT_URL="git@192.168.88.10/root/git.git"
+        
+    }
+    
+    stages {
+        
+        stage('Compilação do Projeto'){
+           
+            steps {
+                echo "$WORKSPACE"
+                sh "curl ifconfig.io"
+            }
+        }
+        
+        
+        stage('Rodando testes em paralelo'){
+            parallel {
+                stage('Teste no Windows XP'){
+                    steps {
+                        echo "Windows XP"
+                    }
+                }
+                stage('Teste no iOS'){
+                    steps {
+                        echo "Apple iOS X - Maverik"
+                    }
+                }
+                stage('Teste no FreeBSD 12'){
+                    steps {
+                        echo "Melhoro que Linux"
+                    }
+                }
+            }
+        }
+        
+         stage('Deploy em Paralelo'){
+            parallel {
+                stage('Deploy AWS'){
+                    steps {
+                        echo "AWS"
+                    }
+                }
+                stage('Deploy GCloud'){
+                    steps {
+                        echo "GCloud"
+                    }
+                }
+  
+            }
+        }
+        stage('Finalizando Projeto'){
+            steps {
+                echo "Projeto compilado com sucesso"
+            
+                echo "$GIT_URL"
+                echo PATH
+            }
+        }
+        
+    }
+    
+    post {
+        always {
+            echo "Sempre mostrar essa msg"
+        }
+        success{
+            echo "Somente mostrar quando for Sucesso"
+        }
+        failure{
+            echo "Somente mostrar quando falhar"
+        }
+    }
+    
+    
+    
+}
+ =========================================
 
 ## Instalando Docker na maquina pipeline
 
