@@ -20,6 +20,10 @@ Jenkins Pipeline Syntax:
 https://jenkins.io/doc/book/pipeline/syntax/
 
 
+Projeto Exemplo Java+SpringBoot:
+https://github.com/jrballot/hw-springboot.git
+
+
 ### GIT
 
 ```
@@ -507,6 +511,126 @@ PIPELINE IN JENKINS:
 ## Rodando SonarQube no Docker
 
 > docker run -dti --name sonarqube --restart always -p 9000:9000 sonarqube
+
+## SONARQUBE
+
+Tool de QA. Realiza uma analise de boas praticas para o codigo. 
+
+Configurar no Jenkins:
+
+Manage jenkins > Configure System > SonarQube servers > Add SonarQube > preencher os dados > Salvar o Nome pois eh com ele que vai gerar a parada.
+
+> adicionar um codigo no gitLab
+> git clone https://github.com/jrballot/hw-springboot.git hwspringboot
+> git remote set-url origin git@192.168.88.10:4linux/hwspringboot.git
+
+#  Configurar um maven
+
+> Manage jenkins > Global Tool Configuration > Maven > de um nome para ele > 
+
+
+Jenkins File para esse projeto:
+===========================================
+pipeline {
+    
+    agent any
+    
+    tools {
+        maven 'maven360'
+    }
+    
+    environment {
+        GIT_URL="git@192.168.88.10:4linux/hwspringboot.git"
+    }
+    
+    stages {
+        stage('Compilação do Projeto') {
+            steps{
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+    }
+}
+===========================================
+
+Adicionando um novo stage
+
+===========================================
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'maven360'
+    }
+
+
+    stages{
+        stage('Compilação do Projeto'){
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        
+        stage('SonarQube'){
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=hwspringboot'
+  
+                }
+
+            }
+        }
+        
+    }
+
+}
+===========================================
+Incrementando para ter chamada do Sonar:
+
+No Sonar:
+> Administration > Configuration > Webhooks > create > a url é o endereço da http://192.168.88.20:8080/sonarqube-webhook
+===========================================
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'maven360'
+    }
+
+
+    stages{
+        stage('Compilação do Projeto'){
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        
+        stage('SonarQube'){
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=hwspringboot'
+  
+                }
+
+            }
+        }
+        
+        stage('Resultado do SonarQube'){
+            steps{
+                timeout(time:1, unit: 'MINUTES'){
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        
+    }
+
+}
+===========================================
+
+--------------------------------------------------------------------------------
 
 ## Rodando SonatypeNexus OSS no Docker
 
