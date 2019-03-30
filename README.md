@@ -630,6 +630,52 @@ pipeline {
 }
 ===========================================
 
+
+Mais uma interação para controlar - a entrada de input que aguarda uma resposta
+
+===========================================
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'maven360'
+    }
+
+
+    stages{
+        stage('Compilação do Projeto'){
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        
+        stage('SonarQube'){
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=hwspringboot'
+  
+                }
+
+            }
+        }
+        
+        stage('Resultado do SonarQube'){
+            input{
+                message "Continuar Pipeline?"
+            }
+            steps{
+                timeout(time:1, unit: 'MINUTES'){
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        
+    }
+
+}
+===========================================
+
 --------------------------------------------------------------------------------
 
 ## Rodando SonatypeNexus OSS no Docker
