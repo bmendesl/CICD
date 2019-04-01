@@ -678,9 +678,226 @@ pipeline {
 
 --------------------------------------------------------------------------------
 
+## NEXUS
 ## Rodando SonatypeNexus OSS no Docker
 
 > docker run -dti --name nexus --restart always -p 8081:8081 sonatype/nexus3
+
+
+--------------------------------------------------------------------------------
+Manage Jenkins > Manage files > Add a new Config > Global Maven settings.xml
+
+edit 
+
+Conexao com meu nexus:
+
+============================================
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
+	    
+   <servers>
+    <server>
+      <id>nexus-snapshots</id>
+      <username>admin</username>
+      <password>admin123</password>
+    </server>
+    <server>
+      <id>nexus-releases</id>
+      <username>admin</username>
+      <password>admin123</password>
+    </server>
+  </servers>
+
+  <mirrors>
+    <mirror>
+      <id>central</id>
+      <name>central</name>
+      <url>http://localhost:8081/repository/maven-public/</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+
+</settings>
+============================================
+
+No git > pom.xml  - editar com as configuracoes novas de Ips
+
+============================================
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.boraji.tutorial.springboot</groupId>
+  <artifactId>spring-boot-hello-world-example</artifactId>
+  <version>0.0.1</version>
+  <packaging>war</packaging>
+  <properties>
+    <java.version>1.8</java.version>
+    <wildfly-hostname>192.168.56.101</wildfly-hostname>
+    <wildfly-port>10020</wildfly-port>
+  </properties>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>1.5.4.RELEASE</version>
+  </parent>
+  <dependencies>
+		<dependency>
+
+
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-tomcat</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		 <dependency>
+			         <groupId>com.h2database</groupId>
+				         <artifactId>h2</artifactId>
+					         <version>1.3.156</version>
+						     </dependency>
+  </dependencies>
+  <build>
+		<finalName>helloworld</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.wildfly.plugins</groupId>
+				<artifactId>wildfly-maven-plugin</artifactId>
+				<version>1.2.1.Final</version>
+				<configuration>
+					<hostname>${wildfly-hostname}</hostname>
+					<port>${wildfly-port}</port>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<url>http://192.168.88.20:8081/repository/nexus-snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>nexus-releases</id>
+			<url>http://192.168.88.20:8081/repository/nexus-releases/</url>
+		</repository>
+	</distributionManagement>
+</project>
+============================================
+
+agra editar o jenkinsfile com um stage a mais
+
+=============================================
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'maven360'
+    }
+
+
+    stages{
+        stage('Compilação do Projeto'){
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        
+        stage('SonarQube'){
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=hwspringboot'
+  
+                }
+
+            }
+        }
+        
+        stage('Resultado do SonarQube'){
+            input{
+                message "Continuar Pipeline?"
+            }
+            steps{
+                timeout(time:1, unit: 'MINUTES'){
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        
+        stage('Salvando Artefato'){
+            steps{
+                sh 'mvn deploy clean package'
+            }
+        }
+    }
+
+}
+=============================================
+maquina PIPELINE
+> /var/lib/jenkins/.m2
+> curl -O https://raw.githubusercontent.com/jrballot/524-settings/master/settings.xml
+> vim settings.xml
+
+==================================================
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
+	    
+   <servers>
+    <server>
+      <id>nexus-snapshots</id>
+      <username>admin</username>
+      <password>admin123</password>
+    </server>
+    <server>
+      <id>nexus-releases</id>
+      <username>admin</username>
+      <password>admin123</password>
+    </server>
+  </servers>
+
+  <mirrors>
+    <mirror>
+      <id>central</id>
+      <name>central</name>
+      <url>http://localhost:8081/repository/maven-public/</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+
+</settings>
+==================================================
+
+
+
+
 
 
 ```
