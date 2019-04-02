@@ -895,8 +895,188 @@ maquina PIPELINE
 </settings>
 ==================================================
 
+## WILDFLY
+
+Subr a maquina wildfly configurando em modo standalone
+
+# logado na maquina:
+>  yum install -y java-1.8.0-openjdk
+> download https://wildfly.org/downloads/
+> curl -O https://download.jboss.org/wildfly/16.0.0.Final/wildfly-16.0.0.Final.tar.gz
+> tar -xvf wildfly-16.0.0.Final.tar.gz
+> cd wildfly-16.0.0.Final/
+
+Para iniciar o wildfly precisamos de um user e agora vamos rodar um script para trocar a senha dele:
+
+> cd /root/wildfly-16.0.0.Final/standalone/configuration
+> vim standalone.xml
+> alterar :
+==============================================================
+:%s/127.0.0.1/192.168.88.30/g
+==============================================================
+
+> cd ~/wildfly-16.0.0.Final/
+> ./bin/add-user.sh
+> opcao - a
+> Username: admin
+> opcao - a
+> opcao no for slave host
+> ./bin/standalone.sh
+> http://192.168.88.30:9990
+
+Ir no Git para atualizar o pom.xml e o jenkinsfile
+
+POM.XML
+=============================================================
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.boraji.tutorial.springboot</groupId>
+  <artifactId>spring-boot-hello-world-example</artifactId>
+  <version>0.0.4</version>
+  <packaging>war</packaging>
+  <properties>
+    <java.version>1.8</java.version>
+    <wildfly-hostname>192.168.88.30</wildfly-hostname>
+    <wildfly-port>9990</wildfly-port>
+    <wildfly-username>admin</wildfly-username>
+    <wildfly-password>4linux</wildfly-password>
+  </properties>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>1.5.4.RELEASE</version>
+  </parent>
+  <dependencies>
+		<dependency>
 
 
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-tomcat</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		 <dependency>
+			         <groupId>com.h2database</groupId>
+				         <artifactId>h2</artifactId>
+					         <version>1.3.156</version>
+						     </dependency>
+  </dependencies>
+  <build>
+		<finalName>helloworld</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.wildfly.plugins</groupId>
+				<artifactId>wildfly-maven-plugin</artifactId>
+				<version>1.2.1.Final</version>
+				<configuration>
+					<hostname>${wildfly-hostname}</hostname>
+					<port>${wildfly-port}</port>
+					<username>${wildfly-username}</username>
+					<password>${wildfly-password}</password>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<url>http://192.168.88.20:8081/repository/nexus-snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>nexus-releases</id>
+			<url>http://192.168.88.20:8081/repository/nexus-releases/</url>
+		</repository>
+	</distributionManagement>
+</project>
+
+=============================================================
+
+
+
+JENKINSFILE
+
+
+=============================================================
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'maven360'
+    }
+
+
+    stages{
+        stage('Compilação do Projeto'){
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+        
+        stage('SonarQube'){
+            steps {
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=hwspringboot'
+  
+                }
+
+            }
+        }
+        
+        stage('Resultado do SonarQube'){
+            input{
+                message "Continuar Pipeline?"
+            }
+            steps{
+                timeout(time:1, unit: 'MINUTES'){
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        
+        stage('Salvando Artefato'){
+            steps{
+                sh 'mvn deploy clean package'
+            }
+        }
+        
+        stage('Subindo aplicação no Wildfly'){
+            steps{
+                sh 'mvn wildfly:deploy'
+            }
+        }
+    }
+
+}
+
+=============================================================
 
 
 
